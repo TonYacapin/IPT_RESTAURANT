@@ -6,7 +6,7 @@ const cors = require('cors');
 const app = express();
 
 // Middleware
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' })); // Extend limit to 50mb
 app.use(cors());
 
 // Connect to MongoDB
