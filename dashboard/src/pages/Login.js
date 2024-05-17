@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -11,35 +11,38 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      localStorage.setItem('token', data.token);
+      const response = await axios.post('http://localhost:5000/api/auth/login', { username, password });
+      const token = response.data.token;
+      localStorage.setItem('token', token);
       navigate('/admin');
     } catch (err) {
-      setError('Invalid email or password');
+      setError('Invalid username or password');
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h2 className="text-3xl mb-4">Login</h2>
+      <h2 className="text-3xl mb-4">Admin Login</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block text-sm font-bold mb-2">Email</label>
+          <label htmlFor="username" className="block text-sm font-bold mb-2">Username</label>
           <input
-            type="email"
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-bold mb-2">Password</label>
+          <label htmlFor="password" className="block text-sm font-bold mb-2">Password</label>
           <input
+            id="password"
             type="password"
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
             required
           />
         </div>

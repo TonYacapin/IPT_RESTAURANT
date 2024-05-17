@@ -1,6 +1,9 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const MenuItem = ({ item }) => {
+  if (!item) return null; // Gracefully handle null or undefined item
+
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-md">
       <img
@@ -16,6 +19,15 @@ const MenuItem = ({ item }) => {
       </div>
     </div>
   );
+};
+
+MenuItem.propTypes = {
+  item: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    image: PropTypes.string.isRequired,
+    price: PropTypes.number.isRequired,
+  }).isRequired,
 };
 
 export default MenuItem;

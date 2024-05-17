@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Button, Typography, IconButton, Paper, Grid, TextField, Avatar, Box, CircularProgress } from '@mui/material';
+import { AddCircleOutline as AddIcon, DeleteOutline as DeleteIcon, EditOutlined as EditIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { createMenuItem, updateMenuItem, deleteMenuItem, fetchMenuItems } from '../services/api';
-import { Button, Paper, Typography, IconButton } from '@mui/material';
-import { AddCircleOutline as AddIcon, DeleteOutline as DeleteIcon, EditOutlined as EditIcon } from '@mui/icons-material';
 
 const AdminPanel = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [currentItem, setCurrentItem] = useState({ name: '', description: '', price: '', image: '' });
     const [imageData, setImageData] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null); // State for image preview
+    const [imagePreview, setImagePreview] = useState(null);
+    const [loading, setLoading] = useState(true); // Add loading state
+    const navigate = useNavigate();
 
     useEffect(() => {
         const getMenuItems = async () => {
             try {
                 const { data } = await fetchMenuItems();
                 setMenuItems(data);
+                setLoading(false); // Set loading to false when menu items are fetched
             } catch (error) {
                 console.error('Error fetching menu items', error);
             }
@@ -32,14 +36,14 @@ const AdminPanel = () => {
                 name: currentItem.name,
                 description: currentItem.description,
                 price: currentItem.price,
-                image: null // Initialize image as null for now
+                image: null
             };
 
             if (imageData) {
                 const base64Image = await convertImageToBase64(imageData);
                 newItem.image = base64Image;
             } else {
-                newItem.image = currentItem.image; // Use the existing image if a new one is not provided
+                newItem.image = currentItem.image;
             }
 
             if (currentItem._id) {
@@ -52,7 +56,7 @@ const AdminPanel = () => {
             setMenuItems(data);
             setCurrentItem({ name: '', description: '', price: '', image: '' });
             setImageData(null);
-            setImagePreview(null); // Clear image preview after submission
+            setImagePreview(null);
         } catch (error) {
             console.error('Error saving menu item', error);
         }
@@ -61,7 +65,6 @@ const AdminPanel = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         setImageData(file);
-        // Generate image preview
         const reader = new FileReader();
         reader.onloadend = () => {
             setImagePreview(reader.result);
@@ -73,7 +76,6 @@ const AdminPanel = () => {
         }
     };
 
-    // Function to convert image file to base64 string
     const convertImageToBase64 = (imageFile) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -89,7 +91,7 @@ const AdminPanel = () => {
 
     const handleEdit = (item) => {
         setCurrentItem(item);
-        setImagePreview(item.image); // Set image preview to the current item's image
+        setImagePreview(item.image);
     };
 
     const handleDelete = async (id) => {
@@ -102,94 +104,114 @@ const AdminPanel = () => {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
+
     return (
-        <div className="container mx-auto px-4 py-8">
-            <Paper elevation={3} className="p-4">
-                <Typography variant="h3" className="mb-4">Admin Panel</Typography>
-                <form onSubmit={handleSubmit} className="mb-8" encType="multipart/form-data">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                            <input
-                                type="text"
-                                name="name"
-                                id="name"
-                                value={currentItem.name}
-                                onChange={handleChange}
-                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea
-                                name="description"
-                                id="description"
-                                value={currentItem.description}
-                                onChange={handleChange}
-                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                rows="3"
-                                required
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
-                            <input
-                                type="number"
-                                name="price"
-                                id="price"
-                                value={currentItem.price}
-                                onChange={handleChange}
-                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="image" className="block text-sm font-medium text-gray-700">Image</label>
-                            <input
-                                type="file"
-                                name="image"
-                                id="image"
-                                onChange={handleImageChange}
-                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                accept="image/*"
-                                required={!currentItem._id} // Make image field required only for new items
-                            />
-                        </div>
-                    </div>
-                    {imagePreview && (
-                        <div className="mt-4">
-                            <img src={imagePreview} alt="Preview" className="max-w-xs" />
-                        </div>
-                    )}
-                    <button type="submit" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Save
-                    </button>
-                </form>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {menuItems.map(item => (
-                        <div key={item._id} className="flex flex-col h-full">
-                            <Paper elevation={3} className="p-4 flex-grow">
-                                <Typography variant="h5" className="mb-2">{item.name}</Typography>
-                                <Typography variant="body1" className="mb-2">{item.description}</Typography>
-                                <Typography variant="body1" className="mb-2">₱{item.price}</Typography>
-                                <div className="max-w-xs h-40 overflow-hidden">
-                                    <img src={item.image} alt={item.name} className="h-full w-auto" />
-                                </div>
-                            </Paper>
-                            <div className="flex mt-2">
-                                <IconButton onClick={() => handleEdit(item)} className="mr-2" aria-label="Edit">
-                                    <EditIcon />
-                                </IconButton>
-                                <IconButton onClick={() => handleDelete(item._id)} aria-label="Delete" color="error">
-                                    <DeleteIcon />
-                                </IconButton>
-                            </div>
-                        </div>
-                    ))}
+        <Box display="flex" justifyContent="center" mt={4}>
+            <Paper elevation={3} className="p-4" style={{ backgroundColor: '#FFFFFF', width: '80%' }}>
+                <div className="flex justify-between items-center mb-4">
+                    <Typography variant="h3" style={{ color: '#FF5733' }}>Admin Panel</Typography>
+                    <IconButton onClick={handleLogout} color="primary" aria-label="logout">
+                        <ExitToAppIcon style={{ color: '#FF5733' }} />
+                    </IconButton>
                 </div>
+                <Paper elevation={3} className="p-4 mt-4" style={{ backgroundColor: '#FFFFFF' }}>
+                    <Typography variant="h5" className="mb-5">Edit Item</Typography>
+                    <form onSubmit={handleSubmit} encType="multipart/form-data">
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                <TextField
+                                    label="Name"
+                                    name="name"
+                                    value={currentItem.name}
+                                    onChange={handleChange}
+                                    fullWidth
+                                    size="large"
+                                    required
+                                    className="mb-3"
+                                />
+                            </Grid>
+                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                <TextField
+                                    label="Description"
+                                    name="description"
+                                    value={currentItem.description}
+                                    onChange={handleChange}
+                                    fullWidth
+                                    size="large"
+                                    required
+                                    className="mb-3"
+                                />
+                            </Grid>
+                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                <TextField
+                                    label="Price"
+                                    name="price"
+                                    type="number"
+                                    value={currentItem.price}
+                                    onChange={handleChange}
+                                    fullWidth
+                                    size="large"
+                                    required
+                                    className="mb-3"
+                                />
+                            </Grid>
+                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                <input
+                                    accept="image/*"
+                                    id="contained-button-file"
+                                    multiple
+                                    type="file"
+                                    onChange={handleImageChange}
+                                    style={{ display: 'none' }}
+                                />
+                                <label htmlFor="contained-button-file">
+                                    <Button variant="contained" component="span" size="large" style={{ backgroundColor: '#FF5733', color: '#FFFFFF', marginBottom: '1rem' }}>
+                                        Upload Image
+                                    </Button>
+                                </label>
+                            </Grid>
+                        </Grid>
+                        {imagePreview && (
+                            <div className="mb-3">
+                                <Avatar alt="Preview" src={imagePreview} sx={{ width: 100, height: 100 }} />
+                            </div>
+                        )}
+                        <Button type="submit" variant="contained" color="primary" size="large" style={{ backgroundColor: '#FF5733', color: '#FFFFFF' }}>
+                            Save
+                        </Button>
+                    </form>
+                </Paper>
+                {loading ? (
+                    <Box display="flex" justifyContent="center" mt={4}>
+                        <CircularProgress color="primary" />
+                    </Box>
+                ) : (
+                    <Grid container spacing={3}>
+                        {menuItems.map(item => (
+                            <Grid item key={item._id} xs={12} sm={6} md={4}>
+                                <Paper elevation={3} className="p-4" style={{ backgroundColor: '#FFFFFF' }}>
+                                    <Typography variant="h5" className="mb-2">{item.name}</Typography>
+                                    <Typography variant="body1" className="mb-2">₱{item.price}</Typography>
+                                    <Avatar alt={item.name} src={item.image} sx={{ width: 100, height: 100, marginBottom: '1rem' }} />
+                                    <div className="flex mt-2">
+                                        <IconButton onClick={() => handleEdit(item)} className="mr-2" aria-label="Edit">
+                                            <EditIcon style={{ color: '#FF5733' }} />
+                                        </IconButton>
+                                        <IconButton onClick={() => handleDelete(item._id)} aria-label="Delete" color="error">
+                                            <DeleteIcon style={{ color: '#FF5733' }} />
+                                        </IconButton>
+                                    </div>
+                                </Paper>
+                            </Grid>
+                        ))}
+                    </Grid>
+                )}
             </Paper>
-        </div>
+        </Box>
     );
 };
 
