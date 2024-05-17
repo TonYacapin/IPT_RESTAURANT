@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createMenuItem, updateMenuItem, deleteMenuItem, fetchMenuItems } from '../services/api';
-import { Button, Grid, Paper, Typography, TextField, IconButton } from '@mui/material';
+import { Button, Paper, Typography, IconButton } from '@mui/material';
 import { AddCircleOutline as AddIcon, DeleteOutline as DeleteIcon, EditOutlined as EditIcon } from '@mui/icons-material';
 
 const AdminPanel = () => {
@@ -38,21 +38,17 @@ const AdminPanel = () => {
             if (imageData) {
                 const base64Image = await convertImageToBase64(imageData);
                 newItem.image = base64Image;
+            } else {
+                newItem.image = currentItem.image; // Use the existing image if a new one is not provided
             }
 
-            console.log("New item before submission:", newItem); // Log newItem before submission
-
             if (currentItem._id) {
-                console.log("Updating existing menu item:", currentItem._id); // Log item ID being updated
                 await updateMenuItem(currentItem._id, newItem);
             } else {
-                console.log("Creating new menu item"); // Log creation of a new item
                 await createMenuItem(newItem);
             }
 
-            console.log("Fetching menu items after submission"); // Log fetching menu items
             const { data } = await fetchMenuItems();
-            console.log("Fetched menu items:", data); // Log fetched menu items
             setMenuItems(data);
             setCurrentItem({ name: '', description: '', price: '', image: '' });
             setImageData(null);
@@ -61,7 +57,6 @@ const AdminPanel = () => {
             console.error('Error saving menu item', error);
         }
     };
-
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -94,6 +89,7 @@ const AdminPanel = () => {
 
     const handleEdit = (item) => {
         setCurrentItem(item);
+        setImagePreview(item.image); // Set image preview to the current item's image
     };
 
     const handleDelete = async (id) => {
@@ -110,7 +106,7 @@ const AdminPanel = () => {
         <div className="container mx-auto px-4 py-8">
             <Paper elevation={3} className="p-4">
                 <Typography variant="h3" className="mb-4">Admin Panel</Typography>
-                <form onSubmit={handleSubmit} className="mb-8" encType="application/json">
+                <form onSubmit={handleSubmit} className="mb-8" encType="multipart/form-data">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
@@ -157,7 +153,7 @@ const AdminPanel = () => {
                                 onChange={handleImageChange}
                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                 accept="image/*"
-                                required
+                                required={!currentItem._id} // Make image field required only for new items
                             />
                         </div>
                     </div>
@@ -192,8 +188,6 @@ const AdminPanel = () => {
                         </div>
                     ))}
                 </div>
-
-
             </Paper>
         </div>
     );

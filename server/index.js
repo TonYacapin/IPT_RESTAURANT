@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+
 const app = express();
 
 // Middleware
@@ -17,6 +18,7 @@ mongoose.connect('mongodb://localhost:27017/restaurant', {
   .catch(err => console.log(err));
 
 // Routes
+app.use('/api/auth', require('./routes/auth')); 
 app.use('/api/menu', require('./routes/menu'));
 
 const port = process.env.PORT || 5000;
