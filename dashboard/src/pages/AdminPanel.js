@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Typography, IconButton, Paper, Grid, TextField, Avatar, Box, CircularProgress } from '@mui/material';
+import { Button, Typography, IconButton, Paper, Grid, TextField, Avatar, Box, CircularProgress, Modal, Fade } from '@mui/material';
 import { AddCircleOutline as AddIcon, DeleteOutline as DeleteIcon, EditOutlined as EditIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { createMenuItem, updateMenuItem, deleteMenuItem, fetchMenuItems } from '../services/api';
@@ -9,21 +9,24 @@ const AdminPanel = () => {
     const [currentItem, setCurrentItem] = useState({ name: '', description: '', price: '', image: '' });
     const [imageData, setImageData] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true);
+    const [open, setOpen] = useState(false); // State for modal
+    const [selectedItem, setSelectedItem] = useState(null); // State for selected item in modal
     const navigate = useNavigate();
 
     useEffect(() => {
-        const getMenuItems = async () => {
-            try {
-                const { data } = await fetchMenuItems();
-                setMenuItems(data);
-                setLoading(false); // Set loading to false when menu items are fetched
-            } catch (error) {
-                console.error('Error fetching menu items', error);
-            }
-        };
-        getMenuItems();
+        fetchMenuItemsData();
     }, []);
+
+    const fetchMenuItemsData = async () => {
+        try {
+            const { data } = await fetchMenuItems();
+            setMenuItems(data);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching menu items', error);
+        }
+    };
 
     const handleChange = (e) => {
         setCurrentItem({ ...currentItem, [e.target.name]: e.target.value });
@@ -52,8 +55,7 @@ const AdminPanel = () => {
                 await createMenuItem(newItem);
             }
 
-            const { data } = await fetchMenuItems();
-            setMenuItems(data);
+            fetchMenuItemsData();
             setCurrentItem({ name: '', description: '', price: '', image: '' });
             setImageData(null);
             setImagePreview(null);
@@ -97,8 +99,7 @@ const AdminPanel = () => {
     const handleDelete = async (id) => {
         try {
             await deleteMenuItem(id);
-            const { data } = await fetchMenuItems();
-            setMenuItems(data);
+            fetchMenuItemsData();
         } catch (error) {
             console.error('Error deleting menu item', error);
         }
@@ -107,6 +108,16 @@ const AdminPanel = () => {
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/login');
+    };
+
+    const handleOpenModal = (item) => {
+        setSelectedItem(item);
+        setOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedItem(null);
+        setOpen(false);
     };
 
     return (
@@ -118,73 +129,75 @@ const AdminPanel = () => {
                         <ExitToAppIcon style={{ color: '#FF5733' }} />
                     </IconButton>
                 </div>
-                <Paper elevation={3} className="p-4 mt-4" style={{ backgroundColor: '#FFFFFF' }}>
-                    <Typography variant="h5" className="mb-5">Edit Item</Typography>
-                    <form onSubmit={handleSubmit} encType="multipart/form-data">
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
-                                <TextField
-                                    label="Name"
-                                    name="name"
-                                    value={currentItem.name}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    size="large"
-                                    required
-                                    className="mb-3"
-                                />
+                {!open && (
+                    <Paper elevation={3} className="p-4 mt-4" style={{ backgroundColor: '#FFFFFF' }}>
+                        <Typography variant="h5" className="mb-5">Edit Item</Typography>
+                        <form onSubmit={handleSubmit} encType="multipart/form-data">
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                    <TextField
+                                        label="Name"
+                                        name="name"
+                                        value={currentItem.name}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        size="large"
+                                        required
+                                        className="mb-3"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                    <TextField
+                                        label="Description"
+                                        name="description"
+                                        value={currentItem.description}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        size="large"
+                                        required
+                                        className="mb-3"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                    <TextField
+                                        label="Price"
+                                        name="price"
+                                        type="number"
+                                        value={currentItem.price}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        size="large"
+                                        required
+                                        className="mb-3"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
+                                    <input
+                                        accept="image/*"
+                                        id="contained-button-file"
+                                        multiple
+                                        type="file"
+                                        onChange={handleImageChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <label htmlFor="contained-button-file">
+                                        <Button variant="contained" component="span" size="large" style={{ backgroundColor: '#FF5733', color: '#FFFFFF', marginBottom: '1rem' }}>
+                                            Upload Image
+                                        </Button>
+                                    </label>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
-                                <TextField
-                                    label="Description"
-                                    name="description"
-                                    value={currentItem.description}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    size="large"
-                                    required
-                                    className="mb-3"
-                                />
-                            </Grid>
-                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
-                                <TextField
-                                    label="Price"
-                                    name="price"
-                                    type="number"
-                                    value={currentItem.price}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    size="large"
-                                    required
-                                    className="mb-3"
-                                />
-                            </Grid>
-                            <Grid item xs={12} style={{ display: 'flex', alignItems: 'center' }}>
-                                <input
-                                    accept="image/*"
-                                    id="contained-button-file"
-                                    multiple
-                                    type="file"
-                                    onChange={handleImageChange}
-                                    style={{ display: 'none' }}
-                                />
-                                <label htmlFor="contained-button-file">
-                                    <Button variant="contained" component="span" size="large" style={{ backgroundColor: '#FF5733', color: '#FFFFFF', marginBottom: '1rem' }}>
-                                        Upload Image
-                                    </Button>
-                                </label>
-                            </Grid>
-                        </Grid>
-                        {imagePreview && (
-                            <div className="mb-3">
-                                <Avatar alt="Preview" src={imagePreview} sx={{ width: 100, height: 100 }} />
-                            </div>
-                        )}
-                        <Button type="submit" variant="contained" color="primary" size="large" style={{ backgroundColor: '#FF5733', color: '#FFFFFF' }}>
-                            Save
-                        </Button>
-                    </form>
-                </Paper>
+                            {imagePreview && (
+                                <div className="mb-3">
+                                    <Avatar alt="Preview" src={imagePreview} sx={{ width: 100, height: 100, borderRadius: '5px', marginBottom: '1rem' }} />
+                                </div>
+                            )}
+                            <Button type="submit" variant="contained" color="primary" size="large" style={{ backgroundColor: '#FF5733', color: '#FFFFFF', textTransform: 'none', fontSize: '16px', fontWeight: '700', borderRadius: '5px' }}>
+                                Save
+                            </Button>
+                        </form>
+                    </Paper>
+                )}
                 {loading ? (
                     <Box display="flex" justifyContent="center" mt={4}>
                         <CircularProgress color="primary" />
@@ -193,10 +206,9 @@ const AdminPanel = () => {
                     <Grid container spacing={3}>
                         {menuItems.map(item => (
                             <Grid item key={item._id} xs={12} sm={6} md={4}>
-                                <Paper elevation={3} className="p-4" style={{ backgroundColor: '#FFFFFF' }}>
-                                    <Typography variant="h5" className="mb-2">{item.name}</Typography>
-                                    <Typography variant="body1" className="mb-2">₱{item.price}</Typography>
-                                    <Avatar alt={item.name} src={item.image} sx={{ width: 100, height: 100, marginBottom: '1rem' }} />
+                                <Paper elevation={3} className="p-4" style={{ backgroundColor: '#FFFFFF', padding: '2rem' }}>
+                                    <Typography variant="h5" className="mb-2" style={{ color: '#FF5733', fontSize: '20px', fontWeight: 700 }}>{item.name}</Typography>
+                                    <Avatar alt={item.name} src={item.image} sx={{ width: 100, height: 100, marginBottom: '1rem', borderRadius: '5px' }} />
                                     <div className="flex mt-2">
                                         <IconButton onClick={() => handleEdit(item)} className="mr-2" aria-label="Edit">
                                             <EditIcon style={{ color: '#FF5733' }} />
@@ -204,12 +216,37 @@ const AdminPanel = () => {
                                         <IconButton onClick={() => handleDelete(item._id)} aria-label="Delete" color="error">
                                             <DeleteIcon style={{ color: '#FF5733' }} />
                                         </IconButton>
+                                        <Button onClick={() => handleOpenModal(item)} variant="outlined" color="primary" style={{ borderColor: '#FF5733', color: '#FF5733', textTransform: 'none', fontSize: '16px', fontWeight: '700', borderRadius: '5px' }}>
+                                            Show Info
+                                        </Button>
                                     </div>
                                 </Paper>
                             </Grid>
                         ))}
                     </Grid>
                 )}
+                <Modal
+                    open={open}
+                    onClose={handleCloseModal}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                    style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                >
+                    <Fade in={open}>
+                        <Box sx={{
+                            backgroundColor: '#FFFFFF',
+                            boxShadow: 24,
+                            padding: '2rem',
+                            borderRadius: '10px',
+                            width: '400px',
+                            textAlign: 'center'
+                        }}>
+                            <Typography id="modal-modal-title" variant="h5" style={{ color: '#FF5733', fontSize: '20px', fontWeight: 700 }}>{selectedItem && selectedItem.name}</Typography>
+                            <Typography id="modal-modal-description" variant="body1" style={{ color: '#333', fontSize: '16px', fontWeight: 400 }}>Price: {selectedItem && `₱${selectedItem.price}`}</Typography>
+                            <Typography id="modal-modal-description" variant="body1" style={{ color: '#333', fontSize: '16px', fontWeight: 400 }}>Description: {selectedItem && selectedItem.description}</Typography>
+                        </Box>
+                    </Fade>
+                </Modal>
             </Paper>
         </Box>
     );

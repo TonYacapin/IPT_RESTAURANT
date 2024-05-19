@@ -1,23 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Card, CardMedia, CardContent, Typography, Button, Collapse, Box } from '@mui/material';
 
 const MenuItem = ({ item }) => {
-  if (!item) return null; // Gracefully handle null or undefined item
+  const [showDescription, setShowDescription] = useState(false);
+
+  const toggleDescription = () => {
+    setShowDescription(!showDescription);
+  };
+
+  if (!item) return null;
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-md">
-      <img
-        src={item.image}
+    <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
+      <CardMedia
+        component="img"
+        height="200"
+        image={item.image}
         alt={item.name}
-        className="w-full h-48 object-cover"
-        style={{ width: '100%', height: '200px' }} // Adjust width and height as needed
+        sx={{ width: '100%', height: '200px', objectFit: 'cover' }}
       />
-      <div className="p-4">
-        <h2 className="text-xl font-semibold mb-2">{item.name}</h2>
-        <p className="text-gray-700">{item.description}</p>
-        <p className="text-gray-900 font-bold mt-2">₱{item.price}</p>
-      </div>
-    </div>
+      <CardContent>
+        <Typography variant="h6" component="div" sx={{ fontFamily: 'Poppins, sans-serif', fontWeight: '600', mb: 1 }}>
+          {item.name}
+        </Typography>
+        <Typography variant="body1" sx={{ fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#FF5733', mb: 2 }}>
+          ₱{item.price}
+        </Typography>
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: '#FF5733', color: '#FFFFFF', mb: 1 }}
+          onClick={toggleDescription}
+        >
+          {showDescription ? 'Hide Description' : 'Show Description'}
+        </Button>
+        <Collapse in={showDescription}>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ fontFamily: 'Poppins, sans-serif', color: '#4A4A4A' }}>
+              {item.description}
+            </Typography>
+          </Box>
+        </Collapse>
+      </CardContent>
+    </Card>
   );
 };
 
