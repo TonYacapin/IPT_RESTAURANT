@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Typography, IconButton, Paper, Grid, TextField, Avatar, Box, CircularProgress, Modal, Fade } from '@mui/material';
-import { AddCircleOutline as AddIcon, DeleteOutline as DeleteIcon, EditOutlined as EditIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
+import {  DeleteOutline as DeleteIcon, EditOutlined as EditIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { createMenuItem, updateMenuItem, deleteMenuItem, fetchMenuItems } from '../services/api';
 

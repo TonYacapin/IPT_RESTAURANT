@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Box, Container, Card, CardContent, CardMedia } from '@mui/material';
+import { Typography, Box, Container, Card, CardMedia } from '@mui/material';
 
 const RecentPosts = () => {
   return (
