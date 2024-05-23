@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Typography, IconButton, Paper, Grid, TextField, Avatar, Box, CircularProgress, Modal, Fade } from '@mui/material';
-import {  DeleteOutline as DeleteIcon, EditOutlined as EditIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
+import { DeleteOutline as DeleteIcon, EditOutlined as EditIcon, ExitToApp as ExitToAppIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { createMenuItem, updateMenuItem, deleteMenuItem, fetchMenuItems } from '../services/api';
 
@@ -12,6 +12,8 @@ const AdminPanel = () => {
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false); // State for modal
     const [selectedItem, setSelectedItem] = useState(null); // State for selected item in modal
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false); // State for delete confirmation modal
+    const [itemToDelete, setItemToDelete] = useState(null); // State for item to delete
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -96,10 +98,19 @@ const AdminPanel = () => {
         setImagePreview(item.image);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = (id) => {
+        const item = menuItems.find(item => item._id === id);
+        if (item) {
+            setItemToDelete(item);
+            setDeleteModalOpen(true);
+        }
+    };
+
+    const handleConfirmDelete = async () => {
         try {
-            await deleteMenuItem(id);
+            await deleteMenuItem(itemToDelete._id);
             fetchMenuItemsData();
+            setDeleteModalOpen(false);
         } catch (error) {
             console.error('Error deleting menu item', error);
         }
@@ -118,6 +129,16 @@ const AdminPanel = () => {
     const handleCloseModal = () => {
         setSelectedItem(null);
         setOpen(false);
+    };
+
+    const handleOpenDeleteModal = (item) => {
+        setItemToDelete(item);
+        setDeleteModalOpen(true);
+    };
+
+    const handleCloseDeleteModal = () => {
+        setItemToDelete(null);
+        setDeleteModalOpen(false);
     };
 
     return (
@@ -244,6 +265,37 @@ const AdminPanel = () => {
                             <Typography id="modal-modal-title" variant="h5" style={{ color: '#FF5733', fontSize: '20px', fontWeight: 700 }}>{selectedItem && selectedItem.name}</Typography>
                             <Typography id="modal-modal-description" variant="body1" style={{ color: '#333', fontSize: '16px', fontWeight: 400 }}>Price: {selectedItem && `₱${selectedItem.price}`}</Typography>
                             <Typography id="modal-modal-description" variant="body1" style={{ color: '#333', fontSize: '16px', fontWeight: 400 }}>Description: {selectedItem && selectedItem.description}</Typography>
+                        </Box>
+                    </Fade>
+                </Modal>
+                <Modal
+                    open={deleteModalOpen}
+                    onClose={handleCloseDeleteModal}
+                    aria-labelledby="delete-modal-title"
+                    aria-describedby="delete-modal-description"
+                    style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                >
+                    <Fade in={deleteModalOpen}>
+                        <Box sx={{
+                            backgroundColor: '#FFFFFF',
+                            boxShadow: 24,
+                            padding: '2rem',
+                            borderRadius: '10px',
+                            width: '400px',
+                            textAlign: 'center'
+                        }}>
+                            <Typography variant="h5" style={{ color: '#FF5733', fontSize: '20px', fontWeight: 700 }}>Confirm Deletion</Typography>
+                            <Typography variant="body1" style={{ color: '#333', fontSize: '16px', fontWeight: 400 }}>
+                                Are you sure you want to delete {itemToDelete && itemToDelete.name}?
+                            </Typography>
+                            <div style={{ marginTop: '1rem' }}>
+                                <Button onClick={handleCloseDeleteModal} variant="outlined" color="primary" style={{ marginRight: '1rem' }}>
+                                    Cancel
+                                </Button>
+                                <Button onClick={handleConfirmDelete} variant="contained" color="primary">
+                                    Delete
+                                </Button>
+                            </div>
                         </Box>
                     </Fade>
                 </Modal>
